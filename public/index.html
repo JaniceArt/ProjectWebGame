@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamie</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Main Wrapper with Grid Background -->
+    <div class="app-wrapper">
+        
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-area">
+                <div class="logo-icon">G</div>
+                <div class="logo-text">Gamie</div>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="openTab('home')">Trang chủ</button>
+                <button class="tab-btn" onclick="openTab('ranking')">Ranking</button>
+                <button class="tab-btn" onclick="openTab('contact')">Liên hệ</button>
+                <button class="tab-btn" id="navAdmin" style="display:none;" onclick="openTab('admin')">Quản trị</button>
+            </div>
+            
+            <div class="auth-buttons">
+                <span id="userInfo" style="display:none; font-weight: bold; margin-right: 15px;"></span>
+                <button class="btn-outline" id="loginBtn" onclick="openModal('login')">Đăng nhập</button>
+                <button class="btn-outline" id="regBtn" onclick="openModal('register')">Đăng ký</button>
+                <button class="btn-outline" id="logoutBtn" style="display:none;" onclick="logout()">Đăng xuất</button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="content-area">
+            
+            <!-- TRANG CHỦ (Home) -->
+            <div id="tab-home" class="tab-content active">
+                
+                <!-- PORTAL VIEW -->
+                <div id="portal-view" style="display:flex; gap: 30px; justify-content: center; margin-top: 50px;">
+                    <div class="panel-box" onclick="openGameScreen(1)" style="cursor:pointer; flex: 1; text-align: center; max-width: 400px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        <div style="font-size: 50px; margin-bottom: 15px;">🐥</div>
+                        <h2 style="margin-bottom: 10px;">Flappy Bird</h2>
+                        <p style="color: #4a5568;">Điều khiển chú chim bay qua các ống nước.</p>
+                        <button class="btn-yellow" style="margin-top: 20px;">Chơi Ngay</button>
+                    </div>
+                    <div class="panel-box" onclick="openGameScreen(2)" style="cursor:pointer; flex: 1; text-align: center; max-width: 400px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        <div style="font-size: 50px; margin-bottom: 15px;">🎯</div>
+                        <h2 style="margin-bottom: 10px;">Aim Trainer</h2>
+                        <p style="color: #4a5568;">Luyện phản xạ: Bấm vào mục tiêu xuất hiện ngẫu nhiên.</p>
+                        <button class="btn-yellow" style="margin-top: 20px;">Chơi Ngay</button>
+                    </div>
+                </div>
+
+                <!-- PLAY VIEW -->
+                <div id="play-view" style="display:none;">
+                    <button class="btn-outline" onclick="backToPortal()" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Trở về Trang chủ</button>
+                    <h2 id="playGameTitle" style="margin-bottom: 20px; font-size: 28px;">Flappy Bird</h2>
+                    
+                    <div class="home-layout">
+                        <!-- Left: Game Canvas -->
+                        <div class="game-column">
+                            <div class="canvas-wrapper">
+                                <canvas id="gameCanvas" width="800" height="500"></canvas>
+                                <div class="ingame-score" id="currentScore">0</div>
+                                
+                                <div id="startScreen" class="game-overlay">
+                                    <div class="game-modal">
+                                        <h2>Sẵn sàng</h2>
+                                        <button class="btn-yellow" onclick="startGame()">Bắt đầu chơi</button>
+                                    </div>
+                                </div>
+                                
+                                <div id="gameOverScreen" class="game-overlay" style="display:none;">
+                                    <div class="game-modal">
+                                        <h2 style="color: #e53e3e;">Game Over</h2>
+                                        <p style="font-weight: bold; margin-bottom: 10px;">Điểm: <span id="finalScoreDisplay">0</span></p>
+                                        <p id="rankMessage" style="font-size: 13px; margin-bottom: 15px;">Đang lưu...</p>
+                                        <button class="btn-yellow" onclick="restartGame()">Chơi lại</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Stats -->
+                        <div class="stats-column">
+                            <div class="stats-row">
+                                <div class="stat-box"><div class="stat-title">ĐIỂM</div><div class="stat-val" id="displayScore">0</div></div>
+                                <div class="stat-box"><div class="stat-title">KỶ LỤC</div><div class="stat-val" id="bestScore">0</div></div>
+                                <div class="stat-box"><div class="stat-title">HẠNG</div><div class="stat-val" id="displayRank">-</div></div>
+                            </div>
+                            
+                            <div class="dashed-box" id="loginPrompt" style="padding: 15px; font-size: 14px;">
+                                Đăng nhập để lưu điểm.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BÌNH LUẬN NẰM DƯỚI CÙNG (FULL WIDTH) -->
+                    <div class="panel-box" style="padding: 20px; margin-top: 30px;">
+                        <h3 style="margin-bottom: 15px; font-size: 20px;">Bình luận</h3>
+                        <form id="commentForm">
+                            <input type="text" id="cmtName" class="brutal-input" style="padding: 10px; margin-bottom: 15px;" placeholder="Tên của bạn" required>
+                            <input type="email" id="cmtEmail" class="brutal-input" style="padding: 10px; margin-bottom: 15px;" placeholder="Email" required>
+                            <select id="cmtRating" class="brutal-input" style="padding: 10px; margin-bottom: 15px;">
+                                <option value="5">5 Sao - Rất hay</option>
+                                <option value="4">4 Sao - Hay</option>
+                                <option value="3">3 Sao - Tạm được</option>
+                                <option value="2">2 Sao - Kém</option>
+                                <option value="1">1 Sao - Tệ</option>
+                            </select>
+                            <textarea id="cmtContent" class="brutal-input" style="padding: 10px; margin-bottom: 15px;" rows="3" placeholder="Nhập bình luận của bạn..." required></textarea>
+                            <button type="submit" class="btn-yellow" style="width: 100%; padding: 12px; font-size: 16px;">Gửi Bình Luận</button>
+                        </form>
+                        <hr style="border: 1px solid #cbd5e0; margin: 25px 0;">
+                        <div id="commentsList" style="max-height: 500px; overflow-y: auto; font-size: 15px;">Đang tải...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RANKING -->
+            <div id="tab-ranking" class="tab-content">
+                <div class="home-layout">
+                    <div class="panel-box" style="flex: 1;">
+                        <h2>Ranking: Flappy Bird</h2>
+                        <table class="brutal-table">
+                            <thead><tr><th>Hạng</th><th>Người chơi</th><th>Điểm số</th></tr></thead>
+                            <tbody id="leaderboard1"><tr><td colspan="3" style="text-align:center;">Đang tải...</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div class="panel-box" style="flex: 1;">
+                        <h2>Ranking: Aim Trainer</h2>
+                        <table class="brutal-table">
+                            <thead><tr><th>Hạng</th><th>Người chơi</th><th>Điểm số</th></tr></thead>
+                            <tbody id="leaderboard2"><tr><td colspan="3" style="text-align:center;">Đang tải...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LIÊN HỆ & GIỚI THIỆU -->
+            <div id="tab-contact" class="tab-content">
+                <div class="panel-box" style="max-width: 800px; margin: 0 auto;">
+                    <div style="margin-bottom: 30px;">
+                        <h2 style="font-size: 28px;">Giới thiệu</h2>
+                        <p style="color: #4a5568; line-height: 1.8; margin-top: 15px; font-size: 16px; font-weight: 500;">
+                            Chào mừng bạn đến với <b>Gamie</b> - nền tảng giải trí và rèn luyện kỹ năng phản xạ hàng đầu. <br><br>
+                            Chúng tôi cung cấp các trò chơi quen thuộc như <b>Flappy Bird</b> hay <b>Aim Trainer</b> để giúp bạn giải tỏa căng thẳng sau những giờ học tập và làm việc. Hệ thống còn tích hợp bảng xếp hạng thời gian thực (Leaderboard) để bạn thỏa sức tranh tài và ghi danh cùng bạn bè. <br><br>
+                            Sứ mệnh của chúng tôi là tạo ra một cộng đồng chơi game lành mạnh và liên tục phát triển những tính năng mới mẻ.
+                        </p>
+                    </div>
+                    
+                    <hr style="border: 1px solid #cbd5e0; margin: 30px 0;">
+                    
+                    <h2 style="font-size: 24px; margin-bottom: 15px;">Liên hệ với chúng tôi</h2>
+                    <p style="color: #4a5568; margin-bottom: 20px; font-weight: 500;">Mọi đóng góp, báo lỗi hoặc ý kiến phản hồi, xin vui lòng gửi qua biểu mẫu dưới đây:</p>
+                    <form id="contactForm">
+                        <input type="text" id="contactName" class="brutal-input" placeholder="Họ tên" required>
+                        <input type="email" id="contactEmail" class="brutal-input" placeholder="Email" required>
+                        <textarea id="contactMessage" class="brutal-input" rows="5" placeholder="Nội dung cần liên hệ" required></textarea>
+                        <button type="submit" class="btn-yellow" style="width: 100%; padding: 12px; font-size: 16px;">Gửi Liên Hệ</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- QUẢN TRỊ -->
+            <div id="tab-admin" class="tab-content">
+                <div class="panel-box">
+                    <h2>Quản trị hệ thống</h2>
+                    <div class="stats-row" style="margin-bottom: 20px;">
+                        <div class="stat-box" style="flex:1;"><div class="stat-title">LƯỢT XEM</div><div class="stat-val" id="statViews">0</div></div>
+                        <div class="stat-box" style="flex:1;"><div class="stat-title">USERS</div><div class="stat-val" id="statPlayers">0</div></div>
+                        <div class="stat-box" style="flex:1;"><div class="stat-title">COMMENTS</div><div class="stat-val" id="statComments">0</div></div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="margin-bottom: 10px;">Cập nhật thông tin trang nội dung</h3>
+                        <div style="display:flex; gap:10px;">
+                            <input type="text" id="adminHomeDesc" class="brutal-input" style="margin-bottom:0;" placeholder="Mô tả trang chủ">
+                            <button class="btn-yellow" onclick="updateHomeDesc()">Lưu</button>
+                        </div>
+                    </div>
+                    <table class="brutal-table">
+                        <thead>
+                            <tr>
+                                <th>Người gửi</th>
+                                <th>Nội dung</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminCommentsList"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Ad Popup Notification -->
+    <div id="adPopup" class="modal-overlay">
+        <div class="popup-box shadow-heavy">
+            <button class="close-btn" onclick="closeAdPopup()"><i class="fas fa-times"></i></button>
+            <div class="popup-tag">QUẢNG CÁO</div>
+            <h1 class="popup-title">Sản phẩm VIP</h1>
+            <p class="popup-desc">Mua ngay gói VIP để nhân đôi điểm số Flappy Bird của bạn!</p>
+            <button class="btn-yellow btn-icon" onclick="closeAdPopup()">
+                Đóng
+            </button>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal-overlay">
+        <div class="popup-box shadow-heavy" style="max-width: 400px; padding: 25px;">
+            <button class="close-btn" onclick="document.getElementById('authModal').classList.remove('active')"><i class="fas fa-times"></i></button>
+            <h2 id="authTitle" style="margin-bottom: 20px;">Đăng nhập</h2>
+            
+            <form id="loginForm" style="display:flex; flex-direction:column; gap:15px;">
+                <input type="text" id="loginUsername" class="brutal-input" placeholder="Tên đăng nhập" required>
+                <input type="password" id="loginPassword" class="brutal-input" placeholder="Mật khẩu" required>
+                <button type="submit" class="btn-yellow" style="width:100%;">Đăng nhập</button>
+            </form>
+            
+            <form id="registerForm" style="display:none; flex-direction:column; gap:15px;">
+                <input type="text" id="regName" class="brutal-input" placeholder="Họ tên" required>
+                <input type="text" id="regUsername" class="brutal-input" placeholder="Tên đăng nhập" required>
+                <input type="password" id="regPassword" class="brutal-input" placeholder="Mật khẩu" required>
+                <button type="submit" class="btn-yellow" style="width:100%;">Đăng ký</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

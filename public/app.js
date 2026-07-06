@@ -369,6 +369,7 @@ function loop() {
 loop();
 
 function action(e) {
+    if(e && e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) return;
     if(e && e.type==='keydown' && e.code!=='Space') return;
     if(e && state!==0 && currentGameId === 1) e.preventDefault();
     if(state===0) { startGame(); }

@@ -1,32 +1,36 @@
-const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto'),mysql=require('mysql2/promise');
-const PORT=process.env.PORT||8080; let pool;
-const mime={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.png':'image/png','.svg':'image/svg+xml'};
-const json=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(data))};
-const body=req=>new Promise((ok,no)=>{let s='';req.on('data',c=>s+=c);req.on('end',()=>{try{ok(s?JSON.parse(s):{})}catch(e){no(e)}})});
-const hash=s=>crypto.createHash('sha256').update(s).digest('hex'); const tokens=new Map();
-const auth=req=>tokens.get((req.headers.authorization||'').replace('Bearer ',''));
-async function init(){const base=await mysql.createConnection({host:process.env.DB_HOST||'127.0.0.1',port:+(process.env.DB_PORT||3307),user:process.env.DB_USER||'root',password:process.env.DB_PASSWORD||''});await base.query('CREATE DATABASE IF NOT EXISTS flappy_tabs CHARACTER SET utf8mb4');await base.end();pool=mysql.createPool({host:process.env.DB_HOST||'127.0.0.1',port:+(process.env.DB_PORT||3307),user:process.env.DB_USER||'root',password:process.env.DB_PASSWORD||'',database:'flappy_tabs',multipleStatements:true});
- await pool.query(`CREATE TABLE IF NOT EXISTS users(id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(80),username VARCHAR(50) UNIQUE,password_hash CHAR(64),role ENUM('user','admin') DEFAULT 'user',created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);CREATE TABLE IF NOT EXISTS games(id INT PRIMARY KEY, name VARCHAR(100), description TEXT);CREATE TABLE IF NOT EXISTS scores(id INT AUTO_INCREMENT PRIMARY KEY,user_id INT,game_id INT DEFAULT 1,score INT,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);CREATE TABLE IF NOT EXISTS comments(id INT AUTO_INCREMENT PRIMARY KEY,user_id INT NULL,game_id INT DEFAULT 1,sender_name VARCHAR(80),sender_email VARCHAR(120),rating_score TINYINT,content TEXT,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL);CREATE TABLE IF NOT EXISTS contacts(id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(80),email VARCHAR(120),message TEXT,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);CREATE TABLE IF NOT EXISTS site_stats(id INT PRIMARY KEY, views INT DEFAULT 0);CREATE TABLE IF NOT EXISTS settings(key_name VARCHAR(50) PRIMARY KEY, val TEXT)`);
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const { connectDB } = require('./config/database');
+const apiRoutes = require('./backend/routes/api');
 
- await pool.query('INSERT IGNORE INTO site_stats(id, views) VALUES(1, 0)');
- await pool.query("INSERT IGNORE INTO games(id, name, description) VALUES(1, 'Flappy Bird', 'Điều khiển chú chim bay qua các ống nước.'),(2, 'Aim Trainer', 'Luyện phản xạ: Bấm vào mục tiêu (hình tròn màu đỏ) xuất hiện ngẫu nhiên để ghi điểm.')");
- await pool.query("INSERT IGNORE INTO settings(key_name, val) VALUES('home_desc', 'Chào mừng đến với hệ thống Game Portal.')");
- await pool.query("INSERT IGNORE INTO users(name,username,password_hash,role) VALUES('Administrator','admin',?,'admin')",[hash('admin123')]);}
-async function api(req,res,url){try{
- if(req.method==='POST'&&url==='/api/register'){const b=await body(req);if(!b.name||!b.username||!b.password)return json(res,400,{message:'Vui lòng nhập đủ thông tin'});const [r]=await pool.query("INSERT INTO users(name,username,password_hash) VALUES(?,?,?)",[b.name,b.username,hash(b.password)]);return json(res,201,{id:r.insertId});}
- if(req.method==='POST'&&url==='/api/login'){const b=await body(req);const [[u]]=await pool.query('SELECT * FROM users WHERE username=? AND password_hash=?',[b.username,hash(b.password||'')]);if(!u)return json(res,401,{message:'Sai tài khoản hoặc mật khẩu'});const token=crypto.randomBytes(24).toString('hex');const user={id:u.id,name:u.name,username:u.username,role:u.role};tokens.set(token,user);return json(res,200,{token,user});}
+const app = express();
+const PORT = process.env.PORT || 8080;
 
- if(req.method==='GET'&&url==='/api/leaderboard'){const gId=new URL(req.url,'http://localhost').searchParams.get('game_id')||1;const [rows]=await pool.query('SELECT u.id, u.name, MAX(s.score) as score FROM users u JOIN scores s ON s.user_id = u.id WHERE s.game_id=? GROUP BY u.id, u.name ORDER BY score DESC LIMIT 50',[gId]);return json(res,200,rows);}
- if(req.method==='POST'&&url==='/api/scores'){const u=auth(req);if(!u)return json(res,401,{message:'Hãy đăng nhập'});const b=await body(req),score=Math.max(0,Math.floor(+b.score||0)),gId=b.game_id||1;await pool.query('INSERT INTO scores(user_id,game_id,score) VALUES(?,?,?)',[u.id,gId,score]);const [[{rank}]]=await pool.query('SELECT COUNT(DISTINCT user_id) + 1 as rank FROM (SELECT user_id, MAX(score) as max_s FROM scores WHERE game_id=? GROUP BY user_id) t WHERE max_s > ?',[gId,score]);return json(res,201,{score,rank});}
- if(req.method==='GET'&&url.startsWith('/api/comments')){const gId=new URL(req.url,'http://localhost').searchParams.get('game_id')||1;const [r]=await pool.query('SELECT id,sender_name senderName,sender_email senderEmail,rating_score ratingScore,content,created_at createdAt FROM comments WHERE game_id=? ORDER BY id DESC LIMIT 100',[gId]);return json(res,200,r)}
- if(req.method==='POST'&&url==='/api/comments'){const b=await body(req),u=auth(req);if(!b.name||!b.email||!b.content)return json(res,400,{message:'Vui lòng nhập đủ thông tin'});await pool.query('INSERT INTO comments(user_id,game_id,sender_name,sender_email,rating_score,content) VALUES(?,?,?,?,?,?)',[u?.id||null,b.game_id||1,b.name,b.email,Math.min(5,Math.max(1,+b.rating||5)),b.content]);return json(res,201,{message:'Đã gửi bình luận'});}
- if(req.method==='DELETE'&&url.startsWith('/api/comments/')){const u=auth(req);if(u?.role!=='admin')return json(res,403,{message:'Chỉ quản trị viên'});await pool.query('DELETE FROM comments WHERE id=?',[url.split('/').pop()]);return json(res,200,{message:'Đã xóa'});}
- if(req.method==='POST'&&url==='/api/contact'){const b=await body(req);await pool.query('INSERT INTO contacts(name,email,message) VALUES(?,?,?)',[b.name,b.email,b.message]);return json(res,201,{message:'Cảm ơn bạn đã liên hệ'});}
- if(req.method==='POST'&&url==='/api/track_view'){await pool.query('UPDATE site_stats SET views = views + 1 WHERE id=1');return json(res,200,{});}
- if(req.method==='GET'&&url==='/api/admin/stats'){const [[stat]]=await pool.query('SELECT views FROM site_stats WHERE id=1');const [[users]]=await pool.query('SELECT COUNT(*) c FROM users');const [[cmts]]=await pool.query('SELECT COUNT(*) c FROM comments');return json(res,200,{views:stat.views,users:users.c,comments:cmts.c});}
- if(req.method==='GET'&&url==='/api/settings'){const [rows]=await pool.query('SELECT * FROM settings');const obj={};rows.forEach(r=>obj[r.key_name]=r.val);return json(res,200,obj);}
- if(req.method==='POST'&&url==='/api/settings'){const u=auth(req);if(u?.role!=='admin')return json(res,403,{message:'Chỉ quản trị viên'});const b=await body(req);await pool.query('UPDATE settings SET val=? WHERE key_name=?',[b.val,b.key]);return json(res,200,{message:'Đã cập nhật'});}
- return json(res,404,{message:'Không tìm thấy API'});
- }catch(e){console.error(e);return json(res,500,{message:e.code==='ER_DUP_ENTRY'?'Tên đăng nhập đã tồn tại':'Lỗi máy chủ'})}}
-const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://localhost').pathname;if(url.startsWith('/api/'))return api(req,res,url);let file=url==='/'?'index.html':url.slice(1);file=path.join(__dirname,'public',file);if(!file.startsWith(path.join(__dirname,'public')))return res.end();fs.readFile(file,(e,d)=>{if(e){res.writeHead(404);return res.end('Not found')}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'});res.end(d)})});
-init().then(()=>server.listen(PORT,()=>console.log(`Flappy Tabs: http://localhost:${PORT}`))).catch(e=>{console.error('MySQL error:',e.message);process.exit(1)});
+// Middlewares
+app.use(cors());
+app.use(express.json()); // Tự động parse JSON body
+
+// API Routes
+app.use('/api', apiRoutes);
+
+// Phục vụ các file tĩnh (HTML, CSS, JS)
+app.use(express.static(path.join(__dirname, 'frontend/src')));
+app.use('/css', express.static(path.join(__dirname, 'frontend/css')));
+app.use('/js', express.static(path.join(__dirname, 'frontend/js')));
+
+// Trang chủ luôn trả về index.html
+app.use((req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/src/index.html'));
+});
+
+// Khởi động server
+connectDB()
+    .then(() => {
+        app.listen(PORT, () => console.log(`🚀 Game Website running with Express at http://localhost:${PORT}`));
+    })
+    .catch(e => {
+        console.error('Failed to start server:', e.message);
+        process.exit(1);
+    });

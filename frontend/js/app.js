@@ -96,6 +96,10 @@ document.getElementById('loginForm').onsubmit = async (e) => {
         currentUser = data.user;
         localStorage.setItem('token', currentToken);
         localStorage.setItem('user', JSON.stringify(currentUser));
+        localStorage.setItem('flappy_best_1', currentUser.best1 || 0);
+        localStorage.setItem('flappy_best_2', currentUser.best2 || 0);
+        bestScore = localStorage.getItem('flappy_best_' + currentGameId) || 0;
+        if(document.getElementById('bestScore')) document.getElementById('bestScore').innerText = bestScore;
         updateUI();
         document.getElementById('authModal').classList.remove('active');
         alert('Đăng nhập thành công!');

@@ -30,7 +30,13 @@ exports.login = async (req, res) => {
         if (!u) return res.status(401).json({ message: 'Sai tài khoản hoặc mật khẩu' });
         
         const token = crypto.randomBytes(24).toString('hex');
-        const user = { id: u.id, name: u.name, username: u.username, role: u.role };
+        const [[s1]] = await getPool().query('SELECT MAX(score) as m FROM scores WHERE user_id=? AND game_id=1', [u.id]);
+        const [[s2]] = await getPool().query('SELECT MAX(score) as m FROM scores WHERE user_id=? AND game_id=2', [u.id]);
+        
+        const user = { 
+            id: u.id, name: u.name, username: u.username, role: u.role,
+            best1: s1.m || 0, best2: s2.m || 0
+        };
         tokens.set(token, user);
         
         return res.status(200).json({ token, user });

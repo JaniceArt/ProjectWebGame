@@ -44,7 +44,7 @@ function updateUI() {
         document.getElementById('logoutBtn').style.display = 'block';
         document.getElementById('userInfo').style.display = 'inline-block';
         document.getElementById('userInfo').innerText = `Chào ${currentUser.name}`;
-        document.getElementById('loginPrompt').innerHTML = `Đang đăng nhập dưới tên <b>${currentUser.name}</b>. Kỷ lục của bạn: <b>${localStorage.getItem('flappy_best')||0}</b>`;
+        document.getElementById('loginPrompt').innerHTML = `Đang đăng nhập dưới tên <b>${currentUser.name}</b>. Kỷ lục sẽ được lưu tự động.`;
         if(currentUser.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
     } else {
         document.getElementById('loginBtn').style.display = 'block';

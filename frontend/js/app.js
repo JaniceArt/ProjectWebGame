@@ -71,11 +71,16 @@ fetchAPI('/api/settings').then(data => {
 
 function getCookie(name) { let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)')); return match ? match[2] : null; }
 function setCookie(name, value, days) { let d = new Date(); d.setTime(d.getTime() + (days*24*60*60*1000)); document.cookie = name + "=" + value + ";path=/;expires=" + d.toUTCString(); }
-setTimeout(() => {
-    if (!getCookie('ad_closed')) {
-        document.getElementById('adPopup').classList.add('active');
+let homeTime = 0;
+let homeTimer = setInterval(() => {
+    if (document.getElementById('tab-home') && document.getElementById('tab-home').classList.contains('active') && !getCookie('ad_closed')) {
+        homeTime++;
+        if (homeTime >= 60) {
+            document.getElementById('adPopup').classList.add('active');
+            clearInterval(homeTimer);
+        }
     }
-}, 60000);
+}, 1000);
 window.closeAdPopup = function() {
     document.getElementById('adPopup').classList.remove('active');
     setCookie('ad_closed', 'true', 365);

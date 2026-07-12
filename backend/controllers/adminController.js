@@ -20,6 +20,17 @@ exports.getStats = async (req, res) => {
     }
 };
 
+exports.getAllComments = async (req, res) => {
+    try {
+        const [r] = await getPool().query(
+            'SELECT id,game_id,sender_name senderName,sender_email senderEmail,rating_score ratingScore,content,created_at createdAt FROM comments ORDER BY id DESC LIMIT 200'
+        );
+        return res.status(200).json(r);
+    } catch (e) {
+        return res.status(500).json({ message: 'Lỗi server' });
+    }
+};
+
 exports.getSettings = async (req, res) => {
     try {
         const [rows] = await getPool().query('SELECT * FROM settings');

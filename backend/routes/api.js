@@ -25,6 +25,7 @@ router.post('/contact', gameController.postContact);
 // --- Admin Routes ---
 router.post('/track_view', adminController.trackView);
 router.get('/admin/stats', requireAdmin, adminController.getStats);
+router.get('/admin/comments', requireAdmin, adminController.getAllComments);
 router.get('/settings', adminController.getSettings);
 router.post('/settings', requireAdmin, adminController.updateSettings);
 router.delete('/comments/:id', requireAdmin, adminController.deleteComment);

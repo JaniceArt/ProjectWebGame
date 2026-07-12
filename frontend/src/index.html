@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gamie</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
@@ -59,7 +58,7 @@
 
                 <!-- PLAY VIEW -->
                 <div id="play-view" style="display:none;">
-                    <button class="btn-outline" onclick="backToPortal()" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Trở về Trang chủ</button>
+                    <button class="btn-outline" onclick="backToPortal()" style="margin-bottom: 20px;">← Trở về Trang chủ</button>
                     <h2 id="playGameTitle" style="margin-bottom: 20px; font-size: 28px;">Flappy Bird</h2>
                     
                     <div class="home-layout">
@@ -203,7 +202,7 @@
     <!-- Ad Popup Notification -->
     <div id="adPopup" class="modal-overlay">
         <div class="popup-box shadow-heavy">
-            <button class="close-btn" onclick="closeAdPopup()"><i class="fas fa-times"></i></button>
+            <button class="close-btn" onclick="closeAdPopup()">X</button>
             <div class="popup-tag">QUẢNG CÁO</div>
             <h1 class="popup-title">Sản phẩm VIP</h1>
             <p class="popup-desc">Mua ngay gói VIP để nhân đôi điểm số Flappy Bird của bạn!</p>
@@ -216,7 +215,7 @@
     <!-- Auth Modal -->
     <div id="authModal" class="modal-overlay">
         <div class="popup-box shadow-heavy" style="max-width: 400px; padding: 25px;">
-            <button class="close-btn" onclick="document.getElementById('authModal').classList.remove('active')"><i class="fas fa-times"></i></button>
+            <button class="close-btn" onclick="document.getElementById('authModal').classList.remove('active')">X</button>
             <h2 id="authTitle" style="margin-bottom: 20px;">Đăng nhập</h2>
             
             <form id="loginForm" style="display:flex; flex-direction:column; gap:15px;">

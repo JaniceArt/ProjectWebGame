@@ -211,10 +211,10 @@ async function loadAdmin() {
         document.getElementById('statViews').innerText = stats.views;
         document.getElementById('statPlayers').innerText = stats.users;
         document.getElementById('statComments').innerText = stats.comments;
-        const cmts = await fetchAPI('/api/comments?game_id=1');
+        const cmts = await fetchAPI('/api/admin/comments');
         document.getElementById('adminCommentsList').innerHTML = cmts.map(c => `
             <tr>
-                <td><b>${c.senderName}</b><br><small>${c.senderEmail}</small></td>
+                <td><b>${c.senderName}</b><br><small>${c.senderEmail}</small><br><small>Game: ${c.game_id}</small></td>
                 <td>${c.content}</td>
                 <td><button class="btn-yellow" onclick="deleteComment(${c.id})">Xóa</button></td>
             </tr>

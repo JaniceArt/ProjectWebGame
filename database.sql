@@ -61,3 +61,4 @@ INSERT IGNORE INTO games(id, name, description) VALUES
     (1, 'Flappy Bird', 'Điều khiển chú chim bay qua các ống nước.'),
     (2, 'Aim Trainer', 'Luyện phản xạ: Bấm vào mục tiêu (hình tròn màu đỏ) xuất hiện ngẫu nhiên để ghi điểm.');
 INSERT IGNORE INTO settings(key_name, val) VALUES('home_desc', 'Chào mừng đến với hệ thống Game Portal.');
+INSERT IGNORE INTO users(name, username, password_hash, role) VALUES('Quản trị viên', 'admin', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', 'admin');

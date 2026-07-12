@@ -121,6 +121,9 @@ document.getElementById('registerForm').onsubmit = async (e) => {
 window.logout = function() {
     currentToken = null; currentUser = null;
     localStorage.removeItem('token'); localStorage.removeItem('user');
+    localStorage.removeItem('flappy_best_1'); localStorage.removeItem('flappy_best_2');
+    bestScore = 0;
+    if(document.getElementById('bestScore')) document.getElementById('bestScore').innerText = '0';
     updateUI(); alert('Đã đăng xuất');
 };
 
